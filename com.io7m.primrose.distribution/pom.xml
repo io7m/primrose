@@ -103,7 +103,8 @@
 
               <libraries>
                 <excludes>
-                  <exclude>com\.io7m\.primrose\.cmdline-.*\.jar</exclude>
+                  <exclude>com\.io7m\.primrose\.distribution-.*\.jar</exclude>
+                  <exclude>com\.io7m\.primrose\.agent-.*\.jar</exclude>
                 </excludes>
               </libraries>
 
