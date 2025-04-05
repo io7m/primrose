@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>com.io7m.primrose</artifactId>
+    <groupId>com.io7m.primrose</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>com.io7m.primrose.distribution</artifactId>
+
+  <name>com.io7m.primrose.distribution</name>
+  <description>Machine configuration agent (Distribution)</description>
+  <url>https://www.io7m.com/software/primrose/</url>
+
+  <properties>
+    <mdep.analyze.skip>true</mdep.analyze.skip>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>com.io7m.primrose.core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>com.io7m.primrose.cmdline</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.io7m.montarre</groupId>
+        <artifactId>com.io7m.montarre.maven_plugin</artifactId>
+        <executions>
+          <execution>
+            <id>make-distribution</id>
+            <goals>
+              <goal>package</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <validationWarningsAreErrors>true</validationWarningsAreErrors>
+
+              <applicationKind>CONSOLE</applicationKind>
+
+              <categories>
+                <category>Development</category>
+              </categories>
+
+              <copyright>Copyright © 2025 Mark Raynsford &lt;code@io7m.com> https://www.io7m.com</copyright>
+
+              <humanName>Primrose</humanName>
+              <packageName>com.io7m.primrose</packageName>
+              <shortName>primrose</shortName>
+
+              <description>Configuration agent</description>
+
+              <version>
+                <number>${project.version}</number>
+                <date>2025-04-05</date>
+              </version>
+
+              <vendor>
+                <id>com.io7m</id>
+                <name>io7m</name>
+              </vendor>
+
+              <longDescriptions>
+                <longDescription>${project.basedir}/src/main/meta/description-en.xml</longDescription>
+              </longDescriptions>
+
+              <mainModule>com.io7m.primrose.cmdline/com.io7m.primrose.cmdline.Main</mainModule>
+
+              <requiredJDKVersion>${io7m.java.targetJavaVersion}</requiredJDKVersion>
+
+              <flatpak>
+                <runtimes>
+                  <runtime>
+                    <name>org.freedesktop.Sdk</name>
+                    <version>24.08</version>
+                    <role>SDK</role>
+                  </runtime>
+                  <runtime>
+                    <name>org.freedesktop.Platform</name>
+                    <version>24.08</version>
+                    <role>PLATFORM</role>
+                  </runtime>
+                </runtimes>
+                <permissions>
+                  <permission>--share=network</permission>
+                  <permission>--filesystem=home:rw</permission>
+                </permissions>
+              </flatpak>
+
+              <libraries>
+                <excludes>
+                  <exclude>com\.io7m\.primrose\.cmdline-.*\.jar</exclude>
+                </excludes>
+              </libraries>
+
+              <resources>
+                <resource>
+                  <role>BOM</role>
+                  <file>${project.build.directory}/bom.xml</file>
+                  <entryName>bom.xml</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_16</role>
+                  <file>${project.basedir}/src/main/meta/icon16.png</file>
+                  <entryName>icon16.png</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_24</role>
+                  <file>${project.basedir}/src/main/meta/icon24.png</file>
+                  <entryName>icon24.png</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_32</role>
+                  <file>${project.basedir}/src/main/meta/icon32.png</file>
+                  <entryName>icon32.png</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_48</role>
+                  <file>${project.basedir}/src/main/meta/icon48.png</file>
+                  <entryName>icon48.png</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_64</role>
+                  <file>${project.basedir}/src/main/meta/icon64.png</file>
+                  <entryName>icon64.png</entryName>
+                </resource>
+                <resource>
+                  <role>ICON_128</role>
+                  <file>${project.basedir}/src/main/meta/icon128.png</file>
+                  <entryName>icon128.png</entryName>
+                </resource>
+                <resource>
+                  <role>SCREENSHOT</role>
+                  <file>${project.basedir}/src/main/meta/screenshot.png</file>
+                  <entryName>screenshot.png</entryName>
+                  <captions>
+                    <caption>
+                      <language>en</language>
+                      <text>The main command-line entry point.</text>
+                    </caption>
+                  </captions>
+                </resource>
+                <resource>
+                  <role>ICO_WINDOWS</role>
+                  <file>${project.basedir}/src/main/meta/icon.ico</file>
+                  <entryName>icon.ico</entryName>
+                </resource>
+                <resource>
+                  <role>LICENSE</role>
+                  <file>${project.basedir}/../README-LICENSE.txt</file>
+                  <entryName>license.txt</entryName>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

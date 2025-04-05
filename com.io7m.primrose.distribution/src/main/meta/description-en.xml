@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<LongDescription xmlns="urn:com.io7m.montarre.package:1"
+                 Language="en">
+  <Paragraph>
+    The Montarre package provides a set of tools for producing native platform artifacts from platform-independent Java
+    packages.
+  </Paragraph>
+
+  <Feature>
+    A rich, strictly-defined, and well-specified packaging format that remains platform-independent whilst allowing
+    straightforward zero-configuration transformations to a wide range of platform-specific package formats.
+  </Feature>
+
+  <Feature>
+    Extensive, type-driven, ahead-of-time checking; if your package validates, you should get working native packages on
+    all platforms.
+  </Feature>
+
+  <Feature>
+    Reproducible builds by default.
+  </Feature>
+
+  <Feature>
+    Support for producing simple jpackage "app-image" executables on any platform.
+  </Feature>
+
+  <Feature>
+    Support for producing Debian .deb packages.
+  </Feature>
+
+  <Feature>
+    Support for producing Windows MSI installers.
+  </Feature>
+
+  <Feature>
+    Support for producing Flatpaks.
+  </Feature>
+
+  <Feature>
+    A carefully-engineered Java API for creating, manipulating, and transforming packages.
+  </Feature>
+
+  <Feature>
+    A full command-line interface built on top of the Java API.
+  </Feature>
+
+  <Feature>
+    A Maven plugin for producing packages from any Maven module.
+  </Feature>
+
+</LongDescription>

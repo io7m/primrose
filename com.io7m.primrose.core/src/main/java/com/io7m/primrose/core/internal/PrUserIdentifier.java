@@ -1,0 +1,75 @@
+/*
+ * Copyright © 2025 Mark Raynsford <code@io7m.com> https://www.io7m.com
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+package com.io7m.primrose.core.internal;
+
+import java.math.BigInteger;
+import java.util.Comparator;
+import java.util.Objects;
+
+/**
+ * A user identifier.
+ *
+ * @param userId The user ID
+ * @param name   The name
+ */
+
+public record PrUserIdentifier(
+  BigInteger userId,
+  String name)
+  implements Comparable<PrUserIdentifier>
+{
+  /**
+   * A user identifier.
+   *
+   * @param userId The user ID
+   * @param name   The name
+   */
+
+  public PrUserIdentifier
+  {
+    Objects.requireNonNull(userId, "userId");
+    Objects.requireNonNull(name, "name");
+
+    final var minUID =
+      BigInteger.ZERO;
+    final var maxUID =
+      BigInteger.valueOf(4294967295L);
+
+    if (userId.compareTo(minUID) < 0) {
+      throw new IllegalArgumentException(
+        "User ID for %s must be non-negative (%s)."
+          .formatted(name, userId)
+      );
+    }
+    if (userId.compareTo(maxUID) > 0) {
+      throw new IllegalArgumentException(
+        "User ID for %s must be greater than 4294967295 (%s)."
+          .formatted(name, userId)
+      );
+    }
+  }
+
+  @Override
+  public int compareTo(
+    final PrUserIdentifier o)
+  {
+    return Comparator.comparing(PrUserIdentifier::userId)
+      .thenComparing(PrUserIdentifier::name)
+      .compare(this, o);
+  }
+}

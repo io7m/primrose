@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <artifactId>com.io7m.primrose</artifactId>
+    <groupId>com.io7m.primrose</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>com.io7m.primrose.agent</artifactId>
+
+  <name>com.io7m.primrose.agent</name>
+  <description>Machine configuration agent (Agent)</description>
+  <url>https://www.io7m.com/software/primrose/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-posix</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Write a custom manifest that excludes shaded dependencies. -->
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            <![CDATA[
+Automatic-Module-Name:    $[project.artifactId]
+Built-By:                 $[io7m.jar.built_by]
+Bundle-Description:       $[project.description]
+Bundle-DocURL:            $[project.distributionManagement.site.url]
+Bundle-Name:              $[project.artifactId] $[project.version] - $[project.description]
+Bundle-SCM:               $[project.scm.url]
+Bundle-Vendor:            $[io7m.jar.vendor]
+Implementation-Build:     $[buildNumber]
+Implementation-Title:     $[project.name]
+Implementation-Vendor:    $[io7m.jar.vendor]
+Implementation-Vendor-Id: $[project.groupId]
+Implementation-Version:   $[project.version]
+Main-Class:               com.io7m.primrose.agent.AgentMain
+Sealed:                   true
+Specification-Title:      $[project.name]
+Specification-Vendor:     $[io7m.jar.vendor]
+Specification-Version:    $[project.version]
+
+-noextraheaders: true
+-snapshot:       SNAPSHOT
+-removeheaders:  Bnd-LastModified, Tool, Private-Package, Build-Jdk-Spec
+
+Import-Package: \
+  !org.apache.*, \
+  *
+]]></bnd>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-osgi-manifest</id>
+            <goals>
+              <goal>bnd-process</goal>
+            </goals>
+            <phase>process-classes</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Produce a shaded jar file. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>shade</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <minimizeJar>false</minimizeJar>
+              <relocations>
+                <relocation>
+                  <pattern>org.apache</pattern>
+                  <shadedPattern>
+                    com.io7m.primrose.agent.apache
+                  </shadedPattern>
+                </relocation>
+              </relocations>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>LICENSE</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/versions/**/module-info.class</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Make the jar reproducible. -->
+      <plugin>
+        <groupId>io.github.zlika</groupId>
+        <artifactId>reproducible-build-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

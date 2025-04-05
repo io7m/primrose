@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -z "${PRIMROSE_HOME}" ]
+then
+  echo "PRIMROSE_HOME is unset" 1>&2
+  exit 1
+fi
+
+exec /usr/bin/env java \
+-p "${PRIMROSE_HOME}/lib" \
+-m com.io7m.primrose.cmdline/com.io7m.primrose.cmdline.Main \
+"$@"
