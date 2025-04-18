@@ -23,10 +23,11 @@ module com.io7m.primrose.core
   requires static com.io7m.immutables.style;
   requires static org.immutables.value;
 
+  requires com.fasterxml.jackson.databind;
   requires com.io7m.jdeferthrow.core;
   requires com.io7m.jproperties.core;
   requires com.io7m.seltzer.api;
-  requires com.samskivert.jmustache;
+  requires freemarker;
   requires org.apache.commons.compress;
   requires org.apache.commons.io;
   requires org.slf4j;

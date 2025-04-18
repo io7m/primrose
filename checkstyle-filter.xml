@@ -7,6 +7,6 @@
 <suppressions>
   <suppress files="AgentMain.java"
             checks="IllegalInstantiation"/>
-  <suppress files="PrProcessor.java"
+  <suppress files=".*"
             checks="RedundantModifier"/>
 </suppressions>

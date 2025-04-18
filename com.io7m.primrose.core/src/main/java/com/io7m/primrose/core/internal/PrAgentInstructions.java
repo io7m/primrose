@@ -76,7 +76,7 @@ public final class PrAgentInstructions
       Objects.requireNonNull(inOutputFile, "inOutputFile");
 
     this.removals =
-      new ArrayList<String>();
+      new ArrayList<>();
     this.ownershipMap =
       new HashMap<>();
   }
@@ -129,6 +129,7 @@ public final class PrAgentInstructions
     entry.setMode(0);
     entry.setUserId(0);
     entry.setGroupId(0);
+    LOG.debug("Archive: Entry {}", entry.getName());
 
     final byte[] jarBytes;
     try (var stream = PrAgentInstructions.class.getResourceAsStream(
@@ -151,6 +152,7 @@ public final class PrAgentInstructions
     entry.setMode(0);
     entry.setUserId(0);
     entry.setGroupId(0);
+    LOG.debug("Archive: Entry {}", entry.getName());
 
     final var lines = new ArrayList<String>();
     for (final var removal : this.removals) {
@@ -194,6 +196,8 @@ public final class PrAgentInstructions
 
         final var entry =
           new TarArchiveEntry(file, relative.toString());
+        LOG.debug("Archive: Entry {}", entry.getName());
+
         entry.setMode(info.modeForFile());
         entry.setUserId(uid);
         entry.setGroupId(gid);
@@ -267,6 +271,8 @@ public final class PrAgentInstructions
         );
 
         final var entry = new TarArchiveEntry(directory, relative.toString());
+        LOG.debug("Archive: Entry {}", entry.getName());
+
         entry.setMode(info.modeForDirectory());
         entry.setUserId(uid);
         entry.setGroupId(gid);

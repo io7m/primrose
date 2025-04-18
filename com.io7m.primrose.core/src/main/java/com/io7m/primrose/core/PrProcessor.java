@@ -23,21 +23,23 @@ import com.io7m.jproperties.JPropertyIncorrectType;
 import com.io7m.jproperties.JPropertyNonexistent;
 import com.io7m.primrose.core.internal.PrAgentInstructions;
 import com.io7m.primrose.core.internal.PrGroupIdentifier;
+import com.io7m.primrose.core.internal.PrMap;
 import com.io7m.primrose.core.internal.PrOwnership;
 import com.io7m.primrose.core.internal.PrUserGroupAssociation;
 import com.io7m.primrose.core.internal.PrUserIdentifier;
 import com.io7m.primrose.core.internal.PrUsers;
-import com.samskivert.mustache.Mustache;
+import com.io7m.primrose.core.internal.PrValueData;
+import freemarker.template.Configuration;
+import freemarker.template.SimpleScalar;
+import freemarker.template.TemplateException;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -56,10 +58,10 @@ public final class PrProcessor
     LoggerFactory.getLogger(PrProcessor.class);
 
   private final PrConfiguration configuration;
-  private final HashMap<String, String> data;
   private final HashMap<String, PrOwnership> ownership;
-  private final HashMap<String, String> userIds;
-  private final HashMap<String, String> groupIds;
+  private final PrMap userIds;
+  private final PrMap groupIds;
+  private PrValueData data;
   private PrUsers users;
   private PrOwnership ownershipDefault;
 
@@ -68,14 +70,12 @@ public final class PrProcessor
   {
     this.configuration =
       Objects.requireNonNull(inConfiguration, "configuration");
-    this.data =
-      new HashMap<>();
     this.ownership =
       new HashMap<>();
     this.userIds =
-      new HashMap<>();
+      new PrMap();
     this.groupIds =
-      new HashMap<>();
+      new PrMap();
   }
 
   /**
@@ -91,6 +91,14 @@ public final class PrProcessor
   {
     Objects.requireNonNull(configuration, "configuration");
     return new PrProcessor(configuration);
+  }
+
+  private static void processFileCreateDirectory(
+    final Path outputFile)
+    throws IOException
+  {
+    LOG.debug("CreateDirectory {}", outputFile);
+    Files.createDirectories(outputFile);
   }
 
   /**
@@ -270,10 +278,16 @@ public final class PrProcessor
     this.users = builder.build();
 
     for (final var user : this.users.users()) {
-      this.userIds.put(user.name(), user.userId().toString());
+      this.userIds.put(
+        user.name(),
+        new SimpleScalar(user.userId().toString())
+      );
     }
     for (final var group : this.users.groups()) {
-      this.groupIds.put(group.name(), group.groupId().toString());
+      this.groupIds.put(
+        group.name(),
+        new SimpleScalar(group.groupId().toString())
+      );
     }
   }
 
@@ -569,7 +583,7 @@ public final class PrProcessor
   private void processFileTemplate(
     final Path inputFile,
     final Path outputFile)
-    throws IOException
+    throws IOException, PrException
   {
     final var filesystem =
       outputFile.getFileSystem();
@@ -580,67 +594,33 @@ public final class PrProcessor
 
     LOG.debug("ProcessTemplate {} -> {}", inputFile, outputPath);
 
-    final var templateData = new HashMap<String, Map<String, String>>();
-    templateData.put("Data", this.data);
+    final var cfg = new Configuration(Configuration.VERSION_2_3_34);
+    cfg.setDirectoryForTemplateLoading(inputFile.getParent().toFile());
+    final var template = cfg.getTemplate(inputFile.getFileName().toString());
+
+    final var templateData = new PrMap();
+    templateData.put("Data", this.data.data());
     templateData.put("UserID", this.userIds);
     templateData.put("GroupID", this.groupIds);
 
-    final var compiler = Mustache.compiler();
-    try (final var reader = Files.newBufferedReader(inputFile)) {
-      final var template =
-        compiler.compile(reader);
-      final var output =
-        template.execute(templateData);
-
-      Files.writeString(
-        outputPath,
-        output,
-        StandardCharsets.UTF_8,
-        StandardOpenOption.TRUNCATE_EXISTING,
-        StandardOpenOption.CREATE
+    try (final var writer = Files.newBufferedWriter(outputPath)) {
+      template.process(templateData, writer);
+    } catch (final TemplateException e) {
+      throw new PrException(
+        e.getMessage(),
+        e,
+        Map.ofEntries(
+          Map.entry("InputFile", inputFile.toString()),
+          Map.entry("OutputFile", outputFile.toString())
+        ),
+        "error-template"
       );
     }
-  }
-
-  private static void processFileCreateDirectory(
-    final Path outputFile)
-    throws IOException
-  {
-    LOG.debug("CreateDirectory {}", outputFile);
-    Files.createDirectories(outputFile);
   }
 
   private void loadValues()
     throws PrException
   {
-    final var dataFile =
-      this.configuration.valuesFile();
-
-    try {
-      final var properties =
-        new Properties();
-
-      final var fileName = dataFile.getFileName().toString();
-      if (fileName.endsWith(".properties")) {
-        try (final var stream = Files.newInputStream(dataFile)) {
-          properties.load(stream);
-        }
-      } else if (fileName.endsWith(".xml")) {
-        try (final var stream = Files.newInputStream(dataFile)) {
-          properties.loadFromXML(stream);
-        }
-      } else {
-        throw new IOException(
-          "Data files must have a .properties or .xml suffix."
-        );
-      }
-
-      this.data.clear();
-      for (final var name : properties.stringPropertyNames()) {
-        this.data.put(name, properties.getProperty(name));
-      }
-    } catch (final IOException e) {
-      throw this.fileException(e, dataFile, "error-data");
-    }
+    this.data = PrValueData.open(this.configuration.valuesFile());
   }
 }

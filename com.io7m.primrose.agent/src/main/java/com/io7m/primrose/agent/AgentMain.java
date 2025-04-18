@@ -95,7 +95,7 @@ public final class AgentMain
   {
     System.exit(
       new AgentMain(
-        Objects.equals(System.getenv("ZONES_AGENT_DRY_RUN"), "true")
+        Objects.equals(System.getenv("PRIMROSE_AGENT_DRY_RUN"), "true")
       ).run()
     );
   }
