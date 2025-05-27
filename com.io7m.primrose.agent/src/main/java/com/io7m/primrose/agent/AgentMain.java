@@ -52,6 +52,9 @@ public final class AgentMain
   private static final Logger LOG =
     Logger.getLogger("agent");
 
+  private static final long UNSPECIFIED_ID =
+    4294967295L;
+
   static {
     LOG.setUseParentHandlers(false);
 
@@ -166,8 +169,8 @@ public final class AgentMain
 
     final var root = Paths.get("/");
 
-    try (var buffered = new BufferedInputStream(System.in, 65536)) {
-      try (var tar = new TarArchiveInputStream(buffered)) {
+    try (final var buffered = new BufferedInputStream(System.in, 65536)) {
+      try (final var tar = new TarArchiveInputStream(buffered)) {
         this.processAgentInstructions(readAgentInstructions(tar));
         final var jar = readAgentJar(tar);
 
@@ -266,17 +269,93 @@ public final class AgentMain
     final var pathText =
       path.toString();
 
-    try (var output =
+    try (final var output =
            Files.newOutputStream(pathTemp, TRUNCATE_EXISTING, CREATE)) {
-      this.posix.chown(pathTempText, (int) uid, (int) gid);
+      this.setFileOwnership(pathTemp, path, uid, gid);
       this.posix.chmod(pathTempText, perm);
 
       output.write(data);
       output.flush();
 
       Files.move(pathTemp, path, REPLACE_EXISTING, ATOMIC_MOVE);
-      this.posix.chown(pathText, (int) uid, (int) gid);
+      this.setFileOwnership(path, path, uid, gid);
       this.posix.chmod(pathText, perm);
+    }
+  }
+
+  /**
+   * Attempt to set the ownership of {@code path}.
+   *
+   * @param path          The path
+   * @param pathReference The reference path from which to take uid/gid values
+   * @param uid           The uid
+   * @param gid           The gid
+   */
+
+  private void setFileOwnership(
+    final Path path,
+    final Path pathReference,
+    final long uid,
+    final long gid)
+    throws IOException
+  {
+    long uidActual = uid;
+    long gidActual = gid;
+
+    /*
+     * If we have no known UID value, then we need to consult the reference
+     * path. If the reference path doesn't exist, then we use the existing UID
+     * on the target file. The target file must exist.
+     */
+
+    if (uid == UNSPECIFIED_ID) {
+      if (Files.exists(pathReference)) {
+        final var stat = this.posix.stat(pathReference.toString());
+        uidActual = Math.toIntExact(stat.uid());
+      } else {
+        final var stat = this.posix.stat(path.toString());
+        uidActual = Math.toIntExact(stat.uid());
+      }
+    }
+
+    /*
+     * If we have no known GID value, then we need to consult the reference
+     * path. If the reference path doesn't exist, then we use the existing GID
+     * on the target file. The target file must exist.
+     */
+
+    if (gid == UNSPECIFIED_ID) {
+      if (Files.exists(pathReference)) {
+        final var stat = this.posix.stat(pathReference.toString());
+        gidActual = Math.toIntExact(stat.gid());
+      } else {
+        final var stat = this.posix.stat(path.toString());
+        gidActual = Math.toIntExact(stat.gid());
+      }
+    }
+
+    LOG.info(
+      "chown %s %s %s"
+        .formatted(
+          path,
+          Long.toUnsignedString(uidActual),
+          Long.toUnsignedString(gidActual)
+        )
+    );
+
+    final var r =
+      this.posix.chown(
+        path.toString(),
+        Math.toIntExact(uidActual),
+        Math.toIntExact(gidActual)
+      );
+
+    if (r != 0) {
+      final var errorMessage =
+        "chown %s failed: %s"
+          .formatted(path, this.posix.strerror(this.posix.errno()));
+      LOG.severe(errorMessage);
+      throw new IOException(errorMessage);
     }
   }
 

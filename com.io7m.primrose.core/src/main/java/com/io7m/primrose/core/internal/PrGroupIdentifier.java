@@ -48,7 +48,7 @@ public record PrGroupIdentifier(
     final var minUID =
       BigInteger.ZERO;
     final var maxUID =
-      BigInteger.valueOf(4294967295L);
+      BigInteger.valueOf(4294967294L);
 
     if (groupId.compareTo(minUID) < 0) {
       throw new IllegalArgumentException(
@@ -58,7 +58,7 @@ public record PrGroupIdentifier(
     }
     if (groupId.compareTo(maxUID) > 0) {
       throw new IllegalArgumentException(
-        "Group ID for %s must be greater than 4294967295 (%s)."
+        "Group ID for %s must be greater than 4294967294 (%s)."
           .formatted(name, groupId)
       );
     }

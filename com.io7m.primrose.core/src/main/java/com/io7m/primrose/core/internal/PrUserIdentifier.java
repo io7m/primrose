@@ -48,7 +48,7 @@ public record PrUserIdentifier(
     final var minUID =
       BigInteger.ZERO;
     final var maxUID =
-      BigInteger.valueOf(4294967295L);
+      BigInteger.valueOf(4294967294L);
 
     if (userId.compareTo(minUID) < 0) {
       throw new IllegalArgumentException(
@@ -58,7 +58,7 @@ public record PrUserIdentifier(
     }
     if (userId.compareTo(maxUID) > 0) {
       throw new IllegalArgumentException(
-        "User ID for %s must be greater than 4294967295 (%s)."
+        "User ID for %s must be less than 4294967294 (%s)."
           .formatted(name, userId)
       );
     }

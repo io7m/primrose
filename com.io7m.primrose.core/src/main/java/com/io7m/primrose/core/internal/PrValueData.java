@@ -120,10 +120,10 @@ public final class PrValueData
         yield m;
       }
       case final ArrayNode array -> {
-        final var m = new PrMap();
+        final var m = new PrList();
         for (int index = 0; index < array.size(); ++index) {
           m.put(
-            Integer.toString(index),
+            index,
             processNode(array.get(index))
           );
         }

@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.TreeSet;
 
 /**
  * A processor.
@@ -61,6 +62,7 @@ public final class PrProcessor
   private final HashMap<String, PrOwnership> ownership;
   private final PrMap userIds;
   private final PrMap groupIds;
+  private final TreeSet<String> deletions;
   private PrValueData data;
   private PrUsers users;
   private PrOwnership ownershipDefault;
@@ -76,6 +78,8 @@ public final class PrProcessor
       new PrMap();
     this.groupIds =
       new PrMap();
+    this.deletions =
+      new TreeSet<>();
   }
 
   /**
@@ -126,6 +130,7 @@ public final class PrProcessor
         this.ownership.values()
           .stream()
           .toList(),
+        this.deletions,
         this.configuration.outputDirectory(),
         this.configuration.outputArchive()
       );
@@ -188,33 +193,9 @@ public final class PrProcessor
           Integer.parseUnsignedInt(parts.get(4), 8);
 
         final var userId =
-          this.users.usersByName()
-            .get(user);
+          this.handleUserID(user, ownerFile);
         final var groupId =
-          this.users.groupsByName()
-            .get(group);
-
-        if (userId == null) {
-          throw new PrException(
-            "Nonexistent user.",
-            Map.ofEntries(
-              Map.entry("User", user),
-              Map.entry("File", ownerFile.toString())
-            ),
-            "error-user"
-          );
-        }
-
-        if (groupId == null) {
-          throw new PrException(
-            "Nonexistent group.",
-            Map.ofEntries(
-              Map.entry("Group", group),
-              Map.entry("File", ownerFile.toString())
-            ),
-            "error-group"
-          );
-        }
+          this.handleGroupID(group, ownerFile);
 
         final var owner =
           new PrOwnership(name, userId, groupId, file, directory);
@@ -244,6 +225,60 @@ public final class PrProcessor
     }
 
     tracker.throwIfNecessary();
+  }
+
+  private Optional<PrGroupIdentifier> handleGroupID(
+    final String group,
+    final Path ownerFile)
+    throws PrException
+  {
+    if (Objects.equals(group, "?")) {
+      return Optional.empty();
+    }
+
+    final var groupId =
+      this.users.groupsByName()
+        .get(group);
+
+    if (groupId == null) {
+      throw new PrException(
+        "Nonexistent group.",
+        Map.ofEntries(
+          Map.entry("Group", group),
+          Map.entry("File", ownerFile.toString())
+        ),
+        "error-group"
+      );
+    }
+
+    return Optional.of(groupId);
+  }
+
+  private Optional<PrUserIdentifier> handleUserID(
+    final String user,
+    final Path ownerFile)
+    throws PrException
+  {
+    if (Objects.equals(user, "?")) {
+      return Optional.empty();
+    }
+
+    final var userId =
+      this.users.usersByName()
+        .get(user);
+
+    if (userId == null) {
+      throw new PrException(
+        "Nonexistent user.",
+        Map.ofEntries(
+          Map.entry("User", user),
+          Map.entry("File", ownerFile.toString())
+        ),
+        "error-user"
+      );
+    }
+
+    return Optional.of(userId);
   }
 
   private void loadUsers()
@@ -535,6 +570,11 @@ public final class PrProcessor
 
     LOG.debug("Process {}", inputFile);
 
+    if (Files.isSymbolicLink(inputFile)) {
+      LOG.warn("Ignoring symbolic link {}", inputFile);
+      return;
+    }
+
     final var outputFile =
       this.configuration.outputDirectory()
         .resolve(inputRelative);
@@ -547,6 +587,11 @@ public final class PrProcessor
 
       if (inputFile.getFileName().toString().endsWith(".primrose")) {
         this.processFileTemplate(inputFile, outputFile);
+        return;
+      }
+
+      if (inputFile.getFileName().toString().endsWith(".primrose_delete")) {
+        this.processFileDelete(outputFile);
         return;
       }
 
@@ -564,6 +609,24 @@ public final class PrProcessor
         List.of()
       );
     }
+  }
+
+  private void processFileDelete(
+    final Path outputFile)
+  {
+    LOG.debug("Delete {}", outputFile);
+
+    final var filesystem =
+      outputFile.getFileSystem();
+    final var outputWithoutExtension =
+      FilenameUtils.removeExtension(outputFile.toString());
+    final var outputPath =
+      filesystem.getPath(outputWithoutExtension);
+    final var outName =
+      this.configuration.outputDirectory()
+        .relativize(outputPath);
+
+    this.deletions.add(outName.toString());
   }
 
   private void processFileCopy(
@@ -621,6 +684,10 @@ public final class PrProcessor
   private void loadValues()
     throws PrException
   {
+    this.deletions.clear();
+    this.userIds.clear();
+    this.groupIds.clear();
+    this.ownership.clear();
     this.data = PrValueData.open(this.configuration.valuesFile());
   }
 }

@@ -149,6 +149,8 @@ public final class PrCmdCompile implements QCommandType
     final QCommandContextType context)
     throws PrException
   {
+    QLogback.configure(context);
+
     final var pr =
       PrProcessor.create(
         PrConfiguration.builder()

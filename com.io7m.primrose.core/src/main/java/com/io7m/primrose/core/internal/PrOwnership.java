@@ -18,6 +18,7 @@
 package com.io7m.primrose.core.internal;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The ownership of a set of files.
@@ -31,8 +32,8 @@ import java.util.Objects;
 
 public record PrOwnership(
   String name,
-  PrUserIdentifier user,
-  PrGroupIdentifier group,
+  Optional<PrUserIdentifier> user,
+  Optional<PrGroupIdentifier> group,
   int modeForFile,
   int modeForDirectory)
 {

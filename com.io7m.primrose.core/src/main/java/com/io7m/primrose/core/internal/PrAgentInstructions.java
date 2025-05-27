@@ -26,9 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -44,25 +47,30 @@ public final class PrAgentInstructions
   private static final Logger LOG =
     LoggerFactory.getLogger(PrAgentInstructions.class);
 
+  private static final long UNSPECIFIED_ID =
+    4294967295L;
+
   private final Path outputFile;
   private final PrOwnership ownershipDefault;
   private final List<PrOwnership> ownership;
+  private final SortedSet<String> deletions;
   private final Path inputDirectory;
-  private final ArrayList<String> removals;
   private final HashMap<String, PrOwnership> ownershipMap;
 
   /**
    * A generator for agent instruction archives.
    *
+   * @param inOwnershipDefault The default ownership
+   * @param inOwnership        The ownership
+   * @param inDeletions        The files to be deleted
    * @param inInputDirectory   The input directory
    * @param inOutputFile       The output file
-   * @param inOwnership        The ownership
-   * @param inOwnershipDefault The default ownership
    */
 
   public PrAgentInstructions(
     final PrOwnership inOwnershipDefault,
     final List<PrOwnership> inOwnership,
+    final SortedSet<String> inDeletions,
     final Path inInputDirectory,
     final Path inOutputFile)
   {
@@ -70,13 +78,13 @@ public final class PrAgentInstructions
       Objects.requireNonNull(inOwnershipDefault, "inOwnershipDefault");
     this.ownership =
       Objects.requireNonNull(inOwnership, "inOwnership");
+    this.deletions =
+      Collections.unmodifiableSortedSet(new TreeSet<>(inDeletions));
     this.inputDirectory =
       Objects.requireNonNull(inInputDirectory, "inInputDirectory");
     this.outputFile =
       Objects.requireNonNull(inOutputFile, "inOutputFile");
 
-    this.removals =
-      new ArrayList<>();
     this.ownershipMap =
       new HashMap<>();
   }
@@ -155,7 +163,7 @@ public final class PrAgentInstructions
     LOG.debug("Archive: Entry {}", entry.getName());
 
     final var lines = new ArrayList<String>();
-    for (final var removal : this.removals) {
+    for (final var removal : this.deletions) {
       lines.add("REMOVE %s".formatted(removal));
     }
     final var data =
@@ -189,10 +197,16 @@ public final class PrAgentInstructions
 
         final var info =
           this.findOwnershipFor(relative);
+
         final var uid =
-          info.user().userId().longValueExact();
+          info.user()
+            .map(x -> x.userId().longValueExact())
+            .orElse(UNSPECIFIED_ID);
+
         final var gid =
-          info.group().groupId().longValueExact();
+          info.group()
+            .map(x -> x.groupId().longValueExact())
+            .orElse(UNSPECIFIED_ID);
 
         final var entry =
           new TarArchiveEntry(file, relative.toString());
@@ -256,10 +270,16 @@ public final class PrAgentInstructions
 
         final var info =
           this.findOwnershipFor(relative);
+
         final var uid =
-          info.user().userId().longValueExact();
+          info.user()
+            .map(x -> x.userId().longValueExact())
+            .orElse(UNSPECIFIED_ID);
+
         final var gid =
-          info.group().groupId().longValueExact();
+          info.group()
+            .map(x -> x.groupId().longValueExact())
+            .orElse(UNSPECIFIED_ID);
 
         LOG.debug(
           "{} (tar {} (uid {} gid {} perm 0{})",
