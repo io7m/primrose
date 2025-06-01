@@ -27,7 +27,7 @@
 
     <!-- io7m dependencies. -->
     <com.io7m.dixmont.version>2.0.0</com.io7m.dixmont.version>
-    <com.io7m.quarrel.version>1.6.1</com.io7m.quarrel.version>
+    <com.io7m.quarrel.version>1.8.0</com.io7m.quarrel.version>
     <com.io7m.repetoir.version>1.0.1</com.io7m.repetoir.version>
 
     <!-- Third-party dependencies. -->
