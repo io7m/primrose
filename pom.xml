@@ -34,7 +34,7 @@
     <jackson.version>2.19.2</jackson.version>
     <io.helidon.version>4.1.6</io.helidon.version>
     <org.junit.version>5.13.4</org.junit.version>
-    <org.immutables.version>2.10.1</org.immutables.version>
+    <org.immutables.version>2.11.2</org.immutables.version>
 
     <!-- Container dependencies. -->
     <com.io7m.oci.versionTemurin>21_35-jre-alpine</com.io7m.oci.versionTemurin>
